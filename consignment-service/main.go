@@ -5,41 +5,51 @@ import (
 	"log"
 
 	pb "github.com/NeptuneG/dumb-golang-microservices/consignment-service/proto/consignment"
+	vesselPb "github.com/NeptuneG/dumb-golang-microservices/vessel-service/proto/vessel"
 	micro "github.com/micro/go-micro"
 )
 
-// IRepository is the interface of repository
 type IRepository interface {
 	Create(consignment *pb.Consignment) (*pb.Consignment, error)
 	GetAll() []pb.Consignment
 }
 
-// Repository is an implement of IRepository interface
 type Repository struct {
 	consignments []*pb.Consignment
 }
 
-// Create is method to create consignments in the repository
 func (repo *Repository) Create(consignment *pb.Consignment) (*pb.Consignment, error) {
 	repo.consignments = append(repo.consignments, consignment)
 	return consignment, nil
 }
 
-// GetAll is method to get all consigments in the repository
 func (repo *Repository) GetAll() []*pb.Consignment {
 	return repo.consignments
 }
 
 type service struct {
-	repo Repository
+	repo         Repository
+	vesselClient vesselPb.VesselServiceClient
 }
 
 func (s *service) CreateConsignment(ctx context.Context, req *pb.Consignment, resp *pb.Response) error {
+	vesselReq := &vesselPb.Specification{
+		Capacity:  int32(len(req.Containers)),
+		MaxWeight: req.Weight,
+	}
+	vesselResp, err := s.vesselClient.FindAvailable(context.Background(), vesselReq)
+	if err != nil {
+		return err
+	}
+	log.Printf("found vessel: %s\n", vesselResp.Vessel.Name)
+
+	req.VesselId = vesselResp.Vessel.Id
 	consignment, err := s.repo.Create(req)
 	if err != nil {
 		return err
 	}
-	resp = &pb.Response{Created: true, Consignment: consignment}
+	resp.Created = true
+	resp.Consignment = consignment
 	return nil
 }
 
@@ -57,7 +67,8 @@ func main() {
 
 	server.Init()
 	repo := Repository{}
-	pb.RegisterShippingServiceHandler(server.Server(), &service{repo})
+	vesselClient := vesselPb.NewVesselServiceClient("go.micro.srv.vessel", server.Client())
+	pb.RegisterShippingServiceHandler(server.Server(), &service{repo, vesselClient})
 
 	if err := server.Run(); err != nil {
 		log.Fatalf("failed to serve: %v", err)
