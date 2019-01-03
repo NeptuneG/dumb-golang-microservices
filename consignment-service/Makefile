@@ -3,4 +3,7 @@ build:
 	GOOS=linux GOARCH=amd64 go build
 	docker build -t consignment-service .
 run:
-	docker run -p 33779:33779 consignment-service
+	docker run -p 33779:33779 \
+	-e MICRO_SERVER_ADDRESS=:33779 \
+	-e MICRO_REGISTRY=mdns \
+	consignment-service
