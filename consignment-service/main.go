@@ -17,6 +17,7 @@ const (
 // IRepository is the interface of repository
 type IRepository interface {
 	Create(consignment *pb.Consignment) (*pb.Consignment, error)
+	GetAll() []pb.Consignment
 }
 
 // Repository is an implement of IRepository interface
@@ -45,6 +46,12 @@ func (s *service) CreateConsignment(ctx context.Context, req *pb.Consignment) (*
 		return nil, err
 	}
 	resp := &pb.Response{Created: true, Consignment: consignment}
+	return resp, nil
+}
+
+func (s *service) GetConsignments(ctx context.Context, req *pb.GetRequest) (*pb.Response, error) {
+	allConsignments := s.repo.GetAll()
+	resp := &pb.Response{Consignments: allConsignments}
 	return resp, nil
 }
 

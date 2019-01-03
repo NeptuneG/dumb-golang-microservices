@@ -1,0 +1,12 @@
+{
+    "description": "This is a test consigment",
+    "weight": 550,
+    "containers": [
+        {
+            "customer_id": "cust001",
+            "origin": "Newcastle",
+            "user_id": "user001"
+        }
+    ],
+    "vessel_id": "vessel001"
+}
