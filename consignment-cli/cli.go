@@ -9,7 +9,8 @@ import (
 	"os"
 
 	pb "github.com/NeptuneG/dumb-golang-microservices/consignment-service/proto/consignment"
-	"google.golang.org/grpc"
+	microclient "github.com/micro/go-micro/client"
+	"github.com/micro/go-micro/cmd"
 )
 
 const (
@@ -33,13 +34,8 @@ func parseFile(filename string) (*pb.Consignment, error) {
 }
 
 func main() {
-	conn, err := grpc.Dial(ADDRESS, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("connect error: %v", err)
-	}
-	defer conn.Close()
-
-	client := pb.NewShippingServiceClient(conn)
+	cmd.Init()
+	client := pb.NewShippingServiceClient("go.micro.srv.consignment", microclient.DefaultClient)
 	infoFile := DEFAULT_INFO_FILE
 	if len(os.Args) > 1 {
 		infoFile = os.Args[1]
