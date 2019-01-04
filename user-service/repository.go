@@ -22,7 +22,7 @@ func (repo *UserRepository) Get(id string) (*pb.User, error) {
 	if err := repo.db.First(&user).Error; err != nil {
 		return nil, err
 	}
-	return u, nil
+	return user, nil
 }
 
 func (repo *UserRepository) GetAll() ([]*pb.User, error) {
@@ -44,5 +44,5 @@ func (repo *UserRepository) GetByEmailAndPassword(user *pb.User) (*pb.User, erro
 	if err := repo.db.Find(&user).Error; err != nil {
 		return nil, err
 	}
-	return u, nil
+	return user, nil
 }
