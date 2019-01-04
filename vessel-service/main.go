@@ -1,57 +1,36 @@
 package main
 
 import (
-	"context"
-	"errors"
 	"log"
-
-	"github.com/micro/go-micro"
+	"os"
 
 	pb "github.com/NeptuneG/dumb-golang-microservices/vessel-service/proto/vessel"
+	micro "github.com/micro/go-micro"
 )
 
-type Repository interface {
-	FindAvailable(*pb.Specification) (*pb.Vessel, error)
-}
-
-type VesselRepository struct {
-	vessels []*pb.Vessel
-}
-
-func (repo *VesselRepository) FindAvailable(spec *pb.Specification) (*pb.Vessel, error) {
-	for _, vessel := range repo.vessels {
-		if vessel.Capacity >= spec.Capacity && vessel.MaxWeight >= spec.MaxWeight {
-			return vessel, nil
-		}
-	}
-	return nil, errors.New("No vessel is available")
-}
-
-type service struct {
-	repo Repository
-}
-
-func (s *service) FindAvailable(ctx context.Context, spec *pb.Specification, resp *pb.Response) error {
-	vessel, err := s.repo.FindAvailable(spec)
-	if err != nil {
-		return err
-	}
-	resp.Vessel = vessel
-	return nil
-}
+const (
+	DEFAULT_HOST = "localhost:27017"
+)
 
 func main() {
-	vessels := []*pb.Vessel{
-		{Id: "vessel001", Name: "Boaty McBoat", MaxWeight: 2000000, Capacity: 500},
+	dbHost := os.Getenv("DB_HOST")
+	if dbHost == "" {
+		dbHost = DEFAULT_HOST
 	}
-	repo := &VesselRepository{vessels}
+	session, err := CreateSession(dbHost)
+	defer session.Close()
+	if err != nil {
+		log.Fatalf("create session error: %v", err)
+	}
+
 	server := micro.NewService(
 		micro.Name("go.micro.srv.vessel"),
 		micro.Version("latest"),
 	)
 	server.Init()
 
-	pb.RegisterVesselServiceHandler(server.Server(), &service{repo})
+	pb.RegisterVesselServiceHandler(server.Server(), &handler{session})
+
 	if err := server.Run(); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
