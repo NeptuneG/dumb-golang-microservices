@@ -28,6 +28,15 @@ services:
     environment: 
       MICRO_ADRESS: ":33781"
       MICRO_REGISTRY: "mdns"
+      DB_NAME: "postgres"
+      DB_HOST: "database"
+      DB_PORT: "5432"
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+  user-cli:
+    build: ./user-cli
+    environment:
+      MICRO_REGISTRY: "mdns"
   datastore:
     image: mongo
     ports:
