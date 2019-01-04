@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  consignment-service:
+    build: ./consignment-service
+    ports:
+      - 33779:33779
+    environment:
+      MICRO_ADRESS: ":33779"
+      MICRO_REGISTRY: "mdns"
+      DB_HOST: "datastore:27017"
+  consignment-cli:
+    build: ./consignment-cli
+    environment:
+      MICRO_REGISTRY: "mdns"
+  vessel-service:
+    build: ./vessel-service
+    ports:
+      - 33780:33780
+    environment:
+      MICRO_ADRESS: ":33780"
+      MICRO_REGISTRY: "mdns"
+      DB_HOST: "datastore:27017"
+  datastore:
+    image: mongo
+    ports:
+      - 27017:27017
