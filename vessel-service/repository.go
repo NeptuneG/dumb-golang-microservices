@@ -37,7 +37,7 @@ func (repo *VesselRepository) FindAvailable(spec *pb.Specification) (*pb.Vessel,
 	var v *pb.Vessel
 	err := repo.collection().Find(bson.M{
 		"capacity":  bson.M{"$gte": spec.Capacity},
-		"maxweight": bson.M{"$bte": spec.MaxWeight},
+		"maxweight": bson.M{"$gte": spec.MaxWeight},
 	}).One(&v)
 	if err != nil {
 		return nil, err
