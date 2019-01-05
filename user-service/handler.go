@@ -45,7 +45,7 @@ func (h *handler) GetAll(ctx context.Context, req *pb.Request, resp *pb.Response
 }
 
 func (h *handler) Auth(ctx context.Context, req *pb.User, resp *pb.Token) error {
-	user, err := h.repo.GetByEmailAndPassword(req)
+	user, err := h.repo.GetByEmail(req.Email)
 	if err != nil {
 		return err
 	}

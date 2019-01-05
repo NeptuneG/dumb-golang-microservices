@@ -9,7 +9,7 @@ type Repository interface {
 	Get(id string) (*pb.User, error)
 	GetAll() ([]*pb.User, error)
 	Create(*pb.User) error
-	GetByEmailAndPassword(*pb.User) (*pb.User, error)
+	GetByEmail(email string) (*pb.User, error)
 }
 
 type UserRepository struct {
@@ -40,8 +40,9 @@ func (repo *UserRepository) Create(user *pb.User) error {
 	return nil
 }
 
-func (repo *UserRepository) GetByEmailAndPassword(user *pb.User) (*pb.User, error) {
-	if err := repo.db.Find(&user).Error; err != nil {
+func (repo *UserRepository) GetByEmail(email string) (*pb.User, error) {
+	user := &pb.User{}
+	if err := repo.db.Where("email = ? ", email).Find(user).Error; err != nil {
 		return nil, err
 	}
 	return user, nil
