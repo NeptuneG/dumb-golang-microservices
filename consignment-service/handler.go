@@ -6,11 +6,11 @@ import (
 
 	pb "github.com/NeptuneG/dumb-golang-microservices/consignment-service/proto/consignment"
 	vesselPb "github.com/NeptuneG/dumb-golang-microservices/vessel-service/proto/vessel"
-	"github.com/go-mgo/mgo"
+	"gopkg.in/mgo.v2"
 )
 
 type handler struct {
-	session      *mgo.session
+	session      *mgo.Session
 	vesselClient vesselPb.VesselServiceClient
 }
 

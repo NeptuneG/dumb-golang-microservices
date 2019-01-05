@@ -2,7 +2,7 @@ package main
 
 import (
 	pb "github.com/NeptuneG/dumb-golang-microservices/consignment-service/proto/consignment"
-	"github.com/go-mgo/mgo"
+	"gopkg.in/mgo.v2"
 )
 
 const (
@@ -11,8 +11,8 @@ const (
 )
 
 type Repository interface {
-	Create(consignment *pb.Consignment) (*pb.Consignment, error)
-	GetAll() ([]pb.Consignment, error)
+	Create(consignment *pb.Consignment) error
+	GetAll() ([]*pb.Consignment, error)
 	Close()
 }
 
