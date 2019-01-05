@@ -4,11 +4,11 @@ import (
 	"context"
 
 	pb "github.com/NeptuneG/dumb-golang-microservices/vessel-service/proto/vessel"
-	"github.com/go-mgo/mgo"
+	"gopkg.in/mgo.v2"
 )
 
 type handler struct {
-	session *mgo.session
+	session *mgo.Session
 }
 
 func (h *handler) GetRepo() Repository {
@@ -24,7 +24,7 @@ func (h *handler) FindAvailable(ctx context.Context, spec *pb.Specification, res
 	return nil
 }
 
-func (h *handler) Create(ctx context.Context, req *pb.Vessel, resp, *pb.Response) error {
+func (h *handler) Create(ctx context.Context, req *pb.Vessel, resp *pb.Response) error {
 	err := h.GetRepo().Create(req)
 	if err != nil {
 		return err

@@ -1,10 +1,9 @@
 package main
 
 import (
-	"errors"
-
 	pb "github.com/NeptuneG/dumb-golang-microservices/vessel-service/proto/vessel"
-	"github.com/go-mgo/mgo"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 const (
@@ -13,7 +12,8 @@ const (
 )
 
 type Repository interface {
-	Create(vessel *pb.Vessel) (*pb.Vessel, error)
+	FindAvailable(*pb.Specification) (*pb.Vessel, error)
+	Create(vessel *pb.Vessel) error
 	Close()
 }
 
@@ -34,10 +34,13 @@ func (repo *VesselRepository) collection() *mgo.Collection {
 }
 
 func (repo *VesselRepository) FindAvailable(spec *pb.Specification) (*pb.Vessel, error) {
-	for _, vessel := range repo.vessels {
-		if vessel.Capacity >= spec.Capacity && vessel.MaxWeight >= spec.MaxWeight {
-			return vessel, nil
-		}
+	var v *pb.Vessel
+	err := repo.collection().Find(bson.M{
+		"capacity":  bson.M{"$gte": spec.Capacity},
+		"maxweight": bson.M{"$bte": spec.MaxWeight},
+	}).One(&v)
+	if err != nil {
+		return nil, err
 	}
-	return nil, errors.New("No vessel is available")
+	return v, nil
 }
