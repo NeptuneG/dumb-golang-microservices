@@ -2,17 +2,25 @@ package main
 
 import (
 	"context"
+	"log"
 
 	pb "github.com/NeptuneG/dumb-golang-microservices/user-service/proto/user"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type handler struct {
-	repo Repository
+	repo         Repository
+	tokenService Authable
 }
 
 func (h *handler) Create(ctx context.Context, req *pb.User, resp *pb.Response) error {
+	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	req.Password = string(hashedPwd)
 	if err := h.repo.Create(req); err != nil {
-		return nil
+		return err
 	}
 	resp.User = req
 	return nil
@@ -21,7 +29,7 @@ func (h *handler) Create(ctx context.Context, req *pb.User, resp *pb.Response) e
 func (h *handler) Get(ctx context.Context, req *pb.User, resp *pb.Response) error {
 	user, err := h.repo.Get(req.Id)
 	if err != nil {
-		return nil
+		return err
 	}
 	resp.User = user
 	return nil
@@ -37,11 +45,19 @@ func (h *handler) GetAll(ctx context.Context, req *pb.Request, resp *pb.Response
 }
 
 func (h *handler) Auth(ctx context.Context, req *pb.User, resp *pb.Token) error {
-	_, err := h.repo.GetByEmailAndPassword(req)
+	user, err := h.repo.GetByEmailAndPassword(req)
 	if err != nil {
 		return err
 	}
-	resp.Token = "dumb_token"
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		log.Fatalf("hashedPassword: %s, password: %s", user.Password, req.Password)
+		return err
+	}
+	token, err := h.tokenService.Encode(user)
+	if err != nil {
+		return err
+	}
+	resp.Token = token
 	return nil
 }
 
