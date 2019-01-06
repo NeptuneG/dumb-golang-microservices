@@ -2,18 +2,19 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
 
 	pb "github.com/NeptuneG/dumb-golang-microservices/user-service/proto/user"
-	micro "github.com/micro/go-micro"
+	"github.com/micro/go-micro/broker"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type handler struct {
 	repo         Repository
 	tokenService Authable
-	Publisher    micro.Publisher
+	PubSub       broker.Broker
 }
 
 const topic = "user.created"
@@ -29,7 +30,7 @@ func (h *handler) Create(ctx context.Context, req *pb.User, resp *pb.Response) e
 	}
 	resp.User = req
 
-	if err := h.Publisher.Publish(ctx, req); err != nil {
+	if err := h.publishEvent(req); err != nil {
 		return err
 	}
 
@@ -81,5 +82,24 @@ func (h *handler) ValidateToken(ctx context.Context, req *pb.Token, resp *pb.Tok
 	}
 
 	resp.Valid = true
+	return nil
+}
+
+func (h *handler) publishEvent(user *pb.User) error {
+	body, err := json.Marshal(user)
+	if err != nil {
+		return err
+	}
+
+	msg := &broker.Message{
+		Header: map[string]string{
+			"id": user.Id,
+		},
+		Body: body,
+	}
+
+	if err := h.PubSub.Publish(topic, msg); err != nil {
+		log.Fatalf("[pub] failed: %v\n", err)
+	}
 	return nil
 }
