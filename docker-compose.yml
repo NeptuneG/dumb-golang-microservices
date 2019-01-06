@@ -37,6 +37,13 @@ services:
     build: ./user-cli
     environment:
       MICRO_REGISTRY: "mdns"
+  email-service:
+    build: ./email-service
+    ports:
+      - 33782:33782
+    environment:
+      MICRO_ADRESS: ":33782"
+      MICRO_REGISTRY: "mdns"
   datastore:
     image: mongo
     ports:
