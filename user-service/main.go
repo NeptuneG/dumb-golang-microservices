@@ -5,7 +5,6 @@ import (
 
 	pb "github.com/NeptuneG/dumb-golang-microservices/user-service/proto/user"
 	micro "github.com/micro/go-micro"
-	"github.com/micro/go-micro/server"
 )
 
 const topic = "user.created"
@@ -27,7 +26,7 @@ func main() {
 		micro.Name("go.micro.srv.user"),
 		micro.Version("latest"),
 	)
-	server.Init()
+	srv.Init()
 
 	publisher := micro.NewPublisher(topic, srv.Client())
 	pb.RegisterUserServiceHandler(srv.Server(), &handler{repo, tokenService, publisher})

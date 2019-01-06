@@ -30,15 +30,15 @@ func main() {
 		log.Fatalf("create session error: %v", err)
 	}
 
-	server := micro.NewService(
+	srv := micro.NewService(
 		micro.Name("go.micro.srv.consignment"),
 		micro.Version("latest"),
 		micro.WrapHandler(AuthWrapper),
 	)
-	server.Init()
+	srv.Init()
 
-	vesselClient := vesselPb.NewVesselServiceClient("go.micro.srv.vessel", server.Client())
-	pb.RegisterShippingServiceHandler(server.Server(), &handler{session, vesselClient})
+	vesselClient := vesselPb.NewVesselServiceClient("go.micro.srv.vessel", srv.Client())
+	pb.RegisterShippingServiceHandler(srv.Server(), &handler{session, vesselClient})
 
 	if err := server.Run(); err != nil {
 		log.Fatalf("failed to serve: %v", err)

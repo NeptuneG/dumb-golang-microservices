@@ -26,15 +26,15 @@ func main() {
 	repo := &VesselRepository{session.Copy()}
 	CreateDummyData(repo)
 
-	server := micro.NewService(
+	srv := micro.NewService(
 		micro.Name("go.micro.srv.vessel"),
 		micro.Version("latest"),
 	)
-	server.Init()
+	srv.Init()
 
-	pb.RegisterVesselServiceHandler(server.Server(), &handler{session})
+	pb.RegisterVesselServiceHandler(srv.Server(), &handler{session})
 
-	if err := server.Run(); err != nil {
+	if err := srv.Run(); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }
