@@ -2,16 +2,21 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	pb "github.com/NeptuneG/dumb-golang-microservices/user-service/proto/user"
+	micro "github.com/micro/go-micro"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type handler struct {
 	repo         Repository
 	tokenService Authable
+	Publisher    micro.Publisher
 }
+
+const topic = "user.created"
 
 func (h *handler) Create(ctx context.Context, req *pb.User, resp *pb.Response) error {
 	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
@@ -23,6 +28,11 @@ func (h *handler) Create(ctx context.Context, req *pb.User, resp *pb.Response) e
 		return err
 	}
 	resp.User = req
+
+	if err := h.Publisher.Publish(ctx, req); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -62,5 +72,14 @@ func (h *handler) Auth(ctx context.Context, req *pb.User, resp *pb.Token) error 
 }
 
 func (h *handler) ValidateToken(ctx context.Context, req *pb.Token, resp *pb.Token) error {
+	cliams, err := h.tokenService.Decode(req.Token)
+	if err != nil {
+		return err
+	}
+	if cliams.User.Id == "" {
+		return errors.New("invalid user")
+	}
+
+	resp.Valid = true
 	return nil
 }
