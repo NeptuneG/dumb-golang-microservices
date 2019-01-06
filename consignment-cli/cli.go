@@ -9,19 +9,14 @@ import (
 	"os"
 
 	pb "github.com/NeptuneG/dumb-golang-microservices/consignment-service/proto/consignment"
+
 	microclient "github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/cmd"
+	"github.com/micro/go-micro/metadata"
 )
 
-const (
-	// ADDRESS is host of consignment service server
-	ADDRESS = "localhost:33779"
-	// DEFAULT_INFO_FILE is the default data file
-	DEFAULT_INFO_FILE = "consignment.json"
-)
-
-func parseFile(filename string) (*pb.Consignment, error) {
-	data, err := ioutil.ReadFile(filename)
+func parseFile(fileName string) (*pb.Consignment, error) {
+	data, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return nil, err
 	}
@@ -34,29 +29,37 @@ func parseFile(filename string) (*pb.Consignment, error) {
 }
 
 func main() {
+
 	cmd.Init()
+
 	client := pb.NewShippingServiceClient("go.micro.srv.consignment", microclient.DefaultClient)
-	infoFile := DEFAULT_INFO_FILE
-	if len(os.Args) > 1 {
-		infoFile = os.Args[1]
+
+	if len(os.Args) < 3 {
+		log.Fatalln("Not enough arguments, expecing file and token.")
 	}
+	infoFile := os.Args[1]
+	token := os.Args[2]
 
 	consignment, err := parseFile(infoFile)
 	if err != nil {
 		log.Fatalf("parse info file error: %v", err)
 	}
 
-	resp, err := client.CreateConsignment(context.Background(), consignment)
+	tokenContext := metadata.NewContext(context.Background(), map[string]string{
+		"token": token,
+	})
+
+	resp, err := client.CreateConsignment(tokenContext, consignment)
 	if err != nil {
 		log.Fatalf("create consignment error: %v", err)
 	}
 	log.Printf("created: %t", resp.Created)
 
-	resp, err = client.GetConsignments(context.Background(), &pb.GetRequest{})
+	resp, err = client.GetConsignments(tokenContext, &pb.GetRequest{})
 	if err != nil {
-		log.Fatalf("fialed to get consignments: %v", err)
+		log.Fatalf("failed to list consignments: %v", err)
 	}
-	for _, consignment := range resp.Consignments {
-		log.Printf("%+v", consignment)
+	for i, c := range resp.Consignments {
+		log.Printf("consignment_%d: %v\n", i, c)
 	}
 }
